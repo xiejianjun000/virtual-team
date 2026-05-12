@@ -1,0 +1,31 @@
+{
+  "name": "@virtual-team/config",
+  "version": "1.0.0",
+  "description": "整合 gstack + Superpowers + Compound Engineering 的虚拟团队配置",
+  "type": "module",
+  "bin": {
+    "virtual-team": "./bin/virtual-team.js"
+  },
+  "scripts": {
+    "team": "node bin/virtual-team.js",
+    "team:help": "node bin/virtual-team.js help"
+  },
+  "keywords": [
+    "ai",
+    "gstack",
+    "superpowers",
+    "compound-engineering",
+    "claude-code",
+    "virtual-team"
+  ],
+  "author": "xiejianjun000",
+  "license": "MIT",
+  "homepage": "https://github.com/xiejianjun000/virtual-team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiejianjun000/virtual-team.git"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
