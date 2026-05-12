@@ -358,8 +358,9 @@ model WebhookEvent {
 
 #### 订阅
 - `GET /api/subscription` - 获取订阅信息
-- `POST /api/subscription/checkout` - 创建结算会话
+- `POST /api/subscription/checkout` - 创建 Stripe Checkout 会话
 - `POST /api/subscription/portal` - 创建客户门户会话
+- `POST /api/webhooks/stripe` - 处理 Stripe Webhook
 
 #### Webhook（GitHub App）
 - `POST /api/webhooks/github` - 处理 GitHub Webhook
@@ -485,10 +486,127 @@ async function executeSkill(
 
 ### 6.3 支付集成
 
-- **支付提供商**：LemonSqueezy
-- **支付方式**：信用卡
-- **计费周期**：月付/年付
+#### 支付提供商：Stripe
+
+选择 Stripe 作为支付提供商，原因：
+- **全球覆盖**：支持 135+ 种货币
+- **中国支付**：原生支持微信支付（WeChat Pay）和支付宝（Alipay）
+- **API 友好**：与 LemonSqueezy 相比，Stripe 的 API 更成熟
+- **合规安全**：PCI DSS Level 1 认证
+- **开发者体验**：优秀的文档和 SDK
+
+#### 支付方式
+
+| 地区 | 支付方式 |
+|------|----------|
+| **中国** | 微信支付、支付宝、银联卡 |
+| **国际** | Visa、Mastercard、American Express、PayPal |
+| **加密货币** | USDC (通过 Stripe) |
+
+#### Stripe 配置
+
+```typescript
+// stripe.config.ts
+import Stripe from 'stripe';
+
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2023-10-16',
+  typescript: true,
+});
+
+// 支持的支付方式配置
+const paymentMethods = {
+  payment_method_types: ['card', 'wechat_pay', 'alipay'],
+  currencies: ['cny', 'usd'],
+};
+```
+
+#### Webhook 处理
+
+```typescript
+// stripeWebhook.ts
+app.post('/api/webhooks/stripe', async (req, res) => {
+  const sig = req.headers['stripe-signature']!;
+  
+  try {
+    const event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+    
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(event.data.object);
+        break;
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object);
+        break;
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object);
+        break;
+      case 'invoice.payment_failed':
+        await handlePaymentFailed(event.data.object);
+        break;
+    }
+  } catch (err) {
+    console.error('Webhook Error:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+```
+
+#### 价格配置
+
+| 套餐 | USD | CNY | Stripe Price ID |
+|------|-----|-----|-----------------|
+| **Free** | $0 | ¥0 | - |
+| **Pro 月付** | $9 | ¥65 | `price_xxx_monthly` |
+| **Pro 年付** | $90 | ¥650 | `price_xxx_yearly` |
+| **Team 月付** | $29 | ¥210 | `price_xxx_team_monthly` |
+| **Team 年付** | $290 | ¥2100 | `price_xxx_team_yearly` |
+
+#### 计费周期
+
+- **月付**：每月自动扣款
+- **年付**：享受 17% 折扣（相当于免费 2 个月）
 - **退款政策**：7天无理由退款
+
+### 6.4 区域定价策略
+
+| 地区 | 货币 | 定价 | 说明 |
+|------|------|------|------|
+| **中国大陆** | CNY | ¥65/月 | 微信/支付宝支付 |
+| **香港/澳门** | HKD | HK$70/月 | 八达通/信用卡 |
+| **台湾** | TWD | NT$280/月 | 信用卡 |
+| **国际** | USD | $9/月 | Stripe |
+| **东南亚** | USD | $7/月 | Stripe（本地定价） |
+
+#### 本地化价格计算
+
+```typescript
+// pricing.ts
+const regionalPricing = {
+  CN: { currency: 'cny', pro: 65, team: 210, discount: 0 },
+  HK: { currency: 'hkd', pro: 70, team: 230, discount: 0 },
+  TW: { currency: 'twd', pro: 280, team: 900, discount: 0 },
+  US: { currency: 'usd', pro: 9, team: 29, discount: 0 },
+  SEA: { currency: 'usd', pro: 7, team: 22, discount: 0.22 }, // 22% 本地折扣
+  DEFAULT: { currency: 'usd', pro: 9, team: 29, discount: 0 },
+};
+
+// Stripe Checkout Session
+const session = await stripe.checkout.sessions.create({
+  mode: 'subscription',
+  payment_method_types: ['card', 'wechat_pay', 'alipay'],
+  line_items: [{
+    price: priceId,
+    quantity: 1,
+  }],
+  currency: regionalPricing[region].currency,
+  success_url: `${domain}/dashboard?success=true`,
+  cancel_url: `${domain}/pricing?canceled=true`,
+});
 
 ---
 
