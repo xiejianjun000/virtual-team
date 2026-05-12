@@ -1,0 +1,27 @@
+{
+  "name": "@virtualteam/db",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:generate": "prisma generate",
+    "build": "tsc --build",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.14.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.14.0",
+    "tsx": "^4.10.0",
+    "typescript": "^5.4.0",
+    "@virtualteam/config": "workspace:*"
+  },
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  }
+}

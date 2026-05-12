@@ -1,31 +1,29 @@
 {
-  "name": "@virtual-team/config",
-  "version": "1.0.0",
-  "description": "整合 gstack + Superpowers + Compound Engineering 的虚拟团队配置",
-  "type": "module",
-  "bin": {
-    "virtual-team": "./bin/virtual-team.js"
-  },
-  "scripts": {
-    "team": "node bin/virtual-team.js",
-    "team:help": "node bin/virtual-team.js help"
-  },
-  "keywords": [
-    "ai",
-    "gstack",
-    "superpowers",
-    "compound-engineering",
-    "claude-code",
-    "virtual-team"
+  "name": "virtualteam",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
   ],
-  "author": "xiejianjun000",
-  "license": "MIT",
-  "homepage": "https://github.com/xiejianjun000/virtual-team",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/xiejianjun000/virtual-team.git"
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "db:push": "pnpm --filter @virtualteam/db db:push",
+    "db:studio": "pnpm --filter @virtualteam/db db:studio",
+    "db:migrate": "pnpm --filter @virtualteam/db db:migrate",
+    "db:seed": "pnpm --filter @virtualteam/db db:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
   },
   "engines": {
-    "node": ">=16.0.0"
-  }
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.0.0"
 }

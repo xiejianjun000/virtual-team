@@ -1,0 +1,9 @@
+{
+  "extends": "@virtualteam/config/typescript/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "."
+  },
+  "include": ["prisma/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

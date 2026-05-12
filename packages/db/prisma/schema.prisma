@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User - 用户
+model User {
+  id            String    @id @default(cuid())
+  githubId      String    @unique
+  githubLogin   String?
+  email         String?   @unique
+  name          String?
+  avatarUrl     String?
+  plan          Plan      @default(FREE)
+  stripeCustomerId String? @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  repositories  Repository[]
+  subscription  Subscription?
+}
+
+// Plan - 订阅套餐
+enum Plan {
+  FREE
+  PRO
+  TEAM
+}
+
+// Subscription - 订阅
+model Subscription {
+  id               String             @id @default(cuid())
+  userId           String             @unique
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan             Plan
+  status           SubscriptionStatus
+  stripeSubscriptionId String?       @unique
+  stripePriceId    String?
+  currentPeriodEnd DateTime
+  cancelAtPeriodEnd Boolean           @default(false)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  PAUSED
+  INCOMPLETE
+  TRIALING
+}
+
+// Repository - GitHub 仓库
+model Repository {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  githubRepoId    Int       @unique
+  name            String
+  fullName        String
+  description     String?
+  defaultBranch   String    @default("main")
+  isEnabled       Boolean   @default(true)
+  installedAt     DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tasks           Task[]
+  releases        Release[]
+  auditReports    AuditReport[]
+  knowledgeItems  Knowledge[]
+  webhookEvents   WebhookEvent[]
+
+  @@index([userId])
+}
+
+// Task - AI 任务
+model Task {
+  id              String     @id @default(cuid())
+  repositoryId    String
+  repository      Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  type            TaskType
+  status          TaskStatus @default(PENDING)
+  progress        Int        @default(0)
+  title           String
+  input           Json?
+  output          Json?
+  error           String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([repositoryId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum TaskType {
+  REVIEW
+  QA
+  SHIP
+  CSO
+  BENCHMARK
+  AUTO_CONFIG
+  DAILY_AUDIT
+  DEPLOY
+}
+
+enum TaskStatus {
+  PENDING
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+// Release - 发布记录
+model Release {
+  id              String    @id @default(cuid())
+  repositoryId    String
+  repository      Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  version         String
+  title           String
+  body            String?   @db.Text
+  prNumber        Int?
+  prUrl           String?
+  publishedAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([repositoryId])
+  @@index([publishedAt])
+}
+
+// AuditReport - 审计报告
+model AuditReport {
+  id              String    @id @default(cuid())
+  repositoryId    String
+  repository      Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  date            DateTime  @db.Date
+  summary         Json
+  issues          Json?
+  createdAt     DateTime  @default(now())
+
+  @@unique([repositoryId, date])
+  @@index([createdAt])
+}
+
+// Knowledge - 沉淀知识
+model Knowledge {
+  id              String    @id @default(cuid())
+  repositoryId    String
+  repository      Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  title           String
+  content         String    @db.Text
+  tags            String[]
+  sourceTaskId    String?
+  createdAt     DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([repositoryId])
+  @@index([tags])
+}
+
+// WebhookEvent - Webhook 事件记录
+model WebhookEvent {
+  id              String    @id @default(cuid())
+  repositoryId    String?
+  repository      Repository? @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
+  type            String
+  action          String?
+  payload         Json
+  processed       Boolean   @default(false)
+  processedAt     DateTime?
+  error           String?
+  createdAt     DateTime  @default(now())
+
+  @@index([processed])
+  @@index([repositoryId])
+  @@index([createdAt])
+}
