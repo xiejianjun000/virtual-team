@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "clean": "rm -rf .next"
   },
   "dependencies": {
@@ -35,7 +35,7 @@
     "autoprefixer": "^10.4.0",
     "@tailwindcss/typography": "^0.5.0",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0",
+    "eslint-config-next": "^16.2.0",
     "@virtualteam/config": "workspace:*"
   }
 }

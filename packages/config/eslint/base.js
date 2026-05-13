@@ -1,14 +1,13 @@
-import nextPlugin from 'eslint-config-next/flat';
+import nextPlugin from 'eslint-config-next';
 
 export default [
   ...nextPlugin,
   {
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
   {
-    ignores: ['.next/', 'node_modules/'],
+    ignores: ['.next/', 'node_modules/', 'dist/', 'coverage/', '*.js'],
   },
 ];
