@@ -16,12 +16,13 @@ jobs:
     steps:
       - uses: actions/stale@v9
         with:
-          days-before-stale: 60
-          days-before-close-stale: 7
+          days-before-issue-stale: 60
+          days-before-issue-close: 7
           stale-issue-label: 'stale'
           stale-issue-message: '此 Issue 已标记为 stale，因为它在 60 天内没有新活动。'
           close-issue-message: '此 Issue 因长时间无响应而关闭。'
-          days-before-stale: 30
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
           stale-pr-label: 'stale'
           stale-pr-message: '此 PR 已标记为 stale，因为它在 30 天内没有新活动。'
           close-pr-message: '此 PR 因长时间无响应而关闭。'
